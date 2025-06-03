@@ -1,0 +1,7 @@
+{
+    "IDX.aI.enableInlineCompletion": true,
+    "IDX.aI.enableCodebaseIndexing": true,
+    "python.analysis.extraPaths": [
+        "/home/user/custom/.venv/lib/python3.13/site-packages"
+    ]
+}
