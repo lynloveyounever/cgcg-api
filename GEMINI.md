@@ -1,79 +1,41 @@
-# Gemini Context: CGCG-API
+# Gemini Project Context
 
-## Project Overview
+This document summarizes the key aspects of the `cgcg-api` project for the Gemini agent.
 
-This is a Python-based web service built using the FastAPI framework. Its original purpose was to query information from a Thinkbox Deadline render farm webservice. 
+## Project Goal
 
-The application is architected to be modular. The core logic in `main.py` dynamically discovers and registers API endpoints from modules located in the `app/modules` directory. This allows for clean separation of concerns and enables developers to work on new features in isolation.
+To build a robust, scalable, and professional FastAPI application. The project has been evolved into a hybrid architecture that supports both a strict, layered API structure and a flexible, pluggable module system.
 
-**Key Technologies:**
+## Key Architecture
 
-- **Backend Framework:** FastAPI
-- **ASGI Server:** Uvicorn
-- **Testing:** Pytest, HTTPX (via FastAPI's TestClient)
-- **Configuration:** Pydantic Settings (`app/core/config.py`)
+- **Hybrid Model**: The application loads two types of routing systems in `main.py`:
+  1.  **Layered API (`/api/v1`)**: A professional, versioned API structure located in `app/api/v1`. This is intended for core, stable business logic.
+  2.  **Pluggable Modules**: A configuration-driven system that loads self-contained modules from the `app/modules` directory. This allows for rapid development and extension.
 
-## Building and Running
+## Key Files & Directories
 
-### 1. Install Dependencies
+- `main.py`: The main application entrypoint. It initializes the FastAPI app and includes routers from both the layered API and the pluggable modules.
+- `app/core/config.py`: Contains Pydantic `Settings` for the application, including the `MODULES` list that controls which pluggable modules are loaded.
+- `app/api/v1/api_router.py`: The main router for the v1 layered API. It aggregates all endpoints from `app/api/v1/endpoints/`.
+- `app/modules/`: Directory for self-contained, pluggable features. Each module typically has its own `router.py`, `service.py`, and `schemas.py`.
+- `app/db/`, `app/services/`: Directories for the layered architecture, containing database models, repositories, and business logic services.
+- `tests/`: Contains the `pytest` test suite.
+- `run_tests.sh`: The primary script for running the test suite.
+- `pyproject.toml`: Defines project metadata and tool configurations (e.g., `black`, `ruff`).
+- `Dockerfile`: Defines the container for deploying the application.
+- `README.md`: The main user-facing documentation for the project.
 
-Install the required Python packages from `requirements.txt`:
+## Key Commands
 
-```bash
-pip install -r requirements.txt
-```
-
-### 2. Run the Server
-
-To run the development server, use the following `uvicorn` command. The `--reload` flag enables hot-reloading on code changes.
-
-```bash
-uvicorn main:app --host 0.0.0.0 --port 8000 --reload
-```
-
-Once running, the service will be available at `http://127.0.0.1:8000`, with interactive API documentation at `http://127.0.0.1:8000/docs`.
-
-### 3. Run Tests
-
-To execute the test suite, run `pytest` from the project root. The `PYTHONPATH=.` prefix is required to ensure that the test runner can correctly locate the main application module.
-
-```bash
-PYTHONPATH=. pytest
-```
-
-## Development Conventions
-
-### Modular Routers
-
-The primary convention is the dynamic router system. To add a new set of API endpoints (e.g., for a new feature called "projects"), follow these steps:
-
-1.  Create a new directory: `app/modules/projects`
-2.  Create an empty `__init__.py` file inside it.
-3.  Create a `router.py` file inside it (`app/modules/projects/router.py`).
-4.  In `router.py`, define and export an `APIRouter` instance named `router`:
-
-    ```python
-    from fastapi import APIRouter
-
-    router = APIRouter(
-        prefix="/projects",
-        tags=["projects"],
-    )
-
-    @router.get("/")
-    async def get_projects():
-        return [{"name": "Project X"}]
-    ```
-
-The application will automatically detect and register this new router on startup.
-
-### Testing
-
--   Tests are located in the `/tests` directory.
--   Tests are written as standard functions (e.g., `def test_...`) using FastAPI's synchronous `TestClient`.
--   New features and modules should be accompanied by corresponding tests.
-
-### Configuration
-
--   Application configuration is managed in `app/core/config.py` using `pydantic-settings`.
--   Configuration can be sourced from environment variables or a `.env` file.
+- **Run development server**:
+  ```bash
+  uvicorn main:app --reload
+  ```
+- **Run test suite**:
+  ```bash
+  ./run_tests.sh
+  ```
+- **Install dependencies**:
+  ```bash
+  pip install -r requirements.txt
+  ```

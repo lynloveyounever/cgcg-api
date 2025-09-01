@@ -7,7 +7,7 @@ def test_get_deadline_jobs():
     """
     Test the GET /deadline/jobs endpoint.
     """
-    response = client.get("/deadline/jobs")
+    response = client.get("/api/v1/deadline/jobs")
     assert response.status_code == 200
     assert isinstance(response.json(), list)
     # Check if the mock data structure is correct

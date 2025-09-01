@@ -4,8 +4,8 @@ from . import schemas
 from .service import deadline_service, DeadlineService
 
 router = APIRouter(
-    prefix="/deadline",
-    tags=["deadline"],
+    tags=["Deadline"],
+    prefix="/deadline"
 )
 
 @router.get("/jobs", response_model=List[schemas.DeadlineJob])

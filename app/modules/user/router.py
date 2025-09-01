@@ -5,8 +5,8 @@ from . import schemas
 from .service import user_service, UserService
 
 router = APIRouter(
-    prefix="/users",
-    tags=["users"],
+    tags=["Users"],
+    prefix="/users"
 )
 
 @router.post("/", response_model=schemas.User, status_code=201)

@@ -6,8 +6,8 @@ from . import schemas
 from .service import media_shuttle_service, MediaShuttleService
 
 router = APIRouter(
-    prefix="/media_shuttle",
-    tags=["media_shuttle"],
+    tags=["Media Shuttle"],
+    prefix="/media_shuttle"
 )
 
 @router.post("/transfers", response_model=schemas.Transfer, status_code=201)
