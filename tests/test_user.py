@@ -47,3 +47,10 @@ def test_create_and_get_user():
     # 5. Verify Deletion
     response_get_deleted = client.get(f"/api/v1/users/{new_id}")
     assert response_get_deleted.status_code == 404
+
+
+def test_read_current_user():
+    """Test reading the current user."""
+    response = client.get("/api/v1/users/me")
+    assert response.status_code == 200
+    assert response.json() == {"username": "fakecurrentuser"}
