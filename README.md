@@ -1,4 +1,4 @@
- [![Open in Cloud Shell](https://gstatic.com/cloudssh/images/open-btn.svg)](https://shell.cloud.google.com/cloudshell/editor?cloudshell_git_repo=https://github.com/lynloveyounever/cgcg-api.git&show=ide&cloudshell_open_in_editor=./README.md&cloudshell_workspace=/home/git)
+ [![Open in Cloud Shell](https://gstatic.com/cloudssh/images/open-btn.svg)](https://shell.cloud.google.com/cloudshell/editor?cloudshell_git_repo=https://github.com/lynloveyounever/cgcg-api.git&show=ide&cloudshell_open_in_editor=./README.md&cloudshell_workspace=~/github)
 
 
 # CGCG API
