@@ -1,0 +1,1 @@
+# 設置 RabbitMQ Broker URL 和 Result Backend。

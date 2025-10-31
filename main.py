@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi_mcp import FastApiMCP
 from app.api.v1.api_router import api_router as api_v1_router
 
 # Create FastAPI app instance
@@ -7,6 +8,12 @@ app = FastAPI(
     description="A comprehensive API for CGCG services",
     version="1.0.0",
 )
+
+mcp = FastApiMCP(
+    app,
+    include_tags=["Deadline AI Tools"]  # Only include AI tools endpoints in MCP
+)
+mcp.mount() # 預設會在 /mcp 創建服務
 
 # Include the versioned API router
 # All application routes are now managed in api_router.py

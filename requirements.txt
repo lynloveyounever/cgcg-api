@@ -2,4 +2,6 @@ fastapi
 uvicorn
 pytest
 httpx
-pydantic
+pydantic_settings
+pydantic[email]
+fastapi_mcp

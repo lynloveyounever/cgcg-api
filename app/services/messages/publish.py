@@ -1,0 +1,1 @@
+# 實際使用 aio-pika API 建立 Channel 和發送訊息。
