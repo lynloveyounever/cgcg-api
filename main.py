@@ -1,6 +1,6 @@
 from fastapi import FastAPI
-from fastapi_mcp import FastApiMCP
 from app.api.v1.api_router import api_router as api_v1_router
+from app.modules.deadline.tools.ai_tools import mcp
 
 # Create FastAPI app instance
 app = FastAPI(
@@ -9,11 +9,8 @@ app = FastAPI(
     version="1.0.0",
 )
 
-mcp = FastApiMCP(
-    app,
-    include_tags=["Deadline AI Tools"]  # Only include AI tools endpoints in MCP
-)
-mcp.mount() # 預設會在 /mcp 創建服務
+# Mount the MCP server from deadline tools
+app.mount("/mcp", mcp.streamable_http_app())
 
 # Include the versioned API router
 # All application routes are now managed in api_router.py

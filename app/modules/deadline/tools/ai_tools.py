@@ -2,16 +2,20 @@
 Deadline AI Tools API endpoints following function-calling specifications.
 These endpoints are designed for AI agents with clear function names,
 simple parameters, and structured responses.
-FastMCP automatically discovers these endpoints and exposes them as MCP tools.
+Enhanced with MCP decorators for proper tool, resource, and prompt support.
 """
 
 from fastapi import APIRouter, HTTPException
 from typing import List, Dict, Any, Optional
 from pydantic import BaseModel, Field
+from mcp.server.fastmcp import FastMCP
 from ..service import deadline_service
 from ..schemas import DeadlineRead
 
 tools_router = APIRouter(tags=["Deadline AI Tools"])
+
+# Create MCP instance for decorators
+mcp = FastMCP("deadline-tools")
 
 
 # Function-calling compatible models
@@ -41,6 +45,7 @@ class WorkloadSummary(BaseModel):
     active_users: List[str] = Field(description="List of users with active jobs")
 
 
+@mcp.tool()
 @tools_router.get("/get_all_jobs", response_model=List[DeadlineJobInfo])
 async def get_all_jobs():
     """
@@ -61,6 +66,7 @@ async def get_all_jobs():
     ]
 
 
+@mcp.tool()
 @tools_router.get("/get_jobs_by_status/{status}", response_model=List[DeadlineJobInfo])
 async def get_jobs_by_status(status: str):
     """
@@ -86,6 +92,7 @@ async def get_jobs_by_status(status: str):
     ]
 
 
+@mcp.tool()
 @tools_router.get("/get_jobs_by_user/{username}", response_model=List[DeadlineJobInfo])
 async def get_jobs_by_user(username: str):
     """
@@ -111,6 +118,7 @@ async def get_jobs_by_user(username: str):
     ]
 
 
+@mcp.tool()
 @tools_router.get("/check_job_status/{job_id}", response_model=JobStatusResult)
 async def check_job_status(job_id: str):
     """
@@ -139,6 +147,7 @@ async def check_job_status(job_id: str):
     )
 
 
+@mcp.tool()
 @tools_router.get("/get_workload_summary", response_model=WorkloadSummary)
 async def get_workload_summary():
     """
@@ -175,6 +184,7 @@ async def get_workload_summary():
     )
 
 
+@mcp.tool()
 @tools_router.get("/get_failed_jobs", response_model=List[DeadlineJobInfo])
 async def get_failed_jobs():
     """
@@ -200,6 +210,7 @@ async def get_failed_jobs():
     ]
 
 
+@mcp.tool()
 @tools_router.get("/get_running_jobs", response_model=List[DeadlineJobInfo])
 async def get_running_jobs():
     """
@@ -225,6 +236,7 @@ async def get_running_jobs():
     ]
 
 
+@mcp.tool()
 @tools_router.get("/count_jobs_by_status", response_model=Dict[str, int])
 async def count_jobs_by_status():
     """
@@ -243,6 +255,7 @@ async def count_jobs_by_status():
     return status_counts
 
 
+@mcp.tool()
 @tools_router.get("/list_active_users", response_model=List[str])
 async def list_active_users():
     """
@@ -256,6 +269,7 @@ async def list_active_users():
     return sorted(users)
 
 
+@mcp.tool()
 @tools_router.get("/is_system_busy", response_model=Dict[str, Any])
 async def is_system_busy():
     """
@@ -283,3 +297,96 @@ async def is_system_busy():
         "load_percentage": round((running_count / total_jobs * 100) if total_jobs > 0 else 0, 1),
         "recommendation": "Wait for current jobs to complete" if is_busy else "System available for new jobs"
     }
+
+# Example MCP Resources (read-only data access)
+@mcp.resource("deadline://jobs")
+async def jobs_resource() -> str:
+    """
+    Resource providing access to all deadline jobs data.
+    
+    This is a resource (not a tool) - it provides read-only access to data.
+    Resources are for data that AI agents can read but not modify.
+    """
+    jobs = await deadline_service.get_jobs()
+    return f"Total jobs: {len(jobs)}\nJobs: {[job.name for job in jobs]}"
+
+
+@mcp.resource("deadline://config")
+async def config_resource() -> str:
+    """
+    Resource providing access to deadline system configuration.
+    
+    Resources provide static or semi-static data that AI agents can reference.
+    """
+    return """
+Deadline System Configuration:
+- Max concurrent jobs: 10
+- Default timeout: 30 minutes
+- Supported formats: .blend, .ma, .max
+- Render engines: Cycles, Arnold, V-Ray
+"""
+
+
+# Example MCP Prompts (text generation templates)
+@mcp.prompt()
+async def job_report_prompt(job_id: str) -> str:
+    """
+    Generate a detailed report for a specific job.
+    
+    This is a prompt (not a tool) - it generates human-readable text.
+    Prompts are for generating reports, summaries, or formatted output.
+    """
+    jobs = await deadline_service.get_jobs()
+    job = next((j for j in jobs if j.id == job_id), None)
+    
+    if not job:
+        return f"Job {job_id} not found."
+    
+    return f"""
+# Deadline Job Report
+
+**Job ID**: {job.id}
+**Name**: {job.name}
+**Status**: {job.status}
+**User**: {job.user}
+
+## Summary
+This job is currently {job.status.lower()}. 
+{'✅ Job completed successfully.' if job.status == 'Completed' else '⏳ Job is still processing.' if job.status == 'Rendering' else '❌ Job needs attention.'}
+
+## Recommendations
+{'No action needed.' if job.status == 'Completed' else 'Monitor progress.' if job.status == 'Rendering' else 'Check logs and restart if necessary.'}
+"""
+
+
+@mcp.prompt()
+async def system_status_prompt() -> str:
+    """
+    Generate a human-readable system status report.
+    
+    Prompts generate formatted text for human consumption.
+    """
+    jobs = await deadline_service.get_jobs()
+    
+    running_jobs = [job for job in jobs if job.status.lower() in ["rendering", "queued", "processing"]]
+    completed_jobs = [job for job in jobs if job.status.lower() == "completed"]
+    failed_jobs = [job for job in jobs if job.status.lower() in ["failed", "error"]]
+    
+    return f"""
+# 🎬 Deadline System Status Report
+
+## 📊 Overview
+- **Total Jobs**: {len(jobs)}
+- **Running**: {len(running_jobs)} 🟢
+- **Completed**: {len(completed_jobs)} ✅
+- **Failed**: {len(failed_jobs)} ❌
+
+## 🔄 Active Jobs
+{chr(10).join([f"- {job.name} ({job.user})" for job in running_jobs[:5]]) if running_jobs else "No active jobs"}
+
+## ⚠️ Issues
+{chr(10).join([f"- {job.name} - {job.status}" for job in failed_jobs]) if failed_jobs else "No issues detected"}
+
+## 💡 System Health
+{'🟢 System running smoothly' if len(failed_jobs) == 0 else '🟡 Some jobs need attention' if len(failed_jobs) < 3 else '🔴 Multiple issues detected'}
+"""
